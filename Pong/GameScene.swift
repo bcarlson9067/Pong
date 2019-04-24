@@ -9,12 +9,19 @@
 import SpriteKit
 import GameplayKit
 
+let ballCategory: UInt32 = 1
+let topCategory: UInt32 = 2
+let paddleCategory: UInt32 = 4
+
 class GameScene: SKScene, SKPhysicsContactDelegate {
-   var topPaddle = SKSpriteNode()
+    var topPaddle = SKSpriteNode()
+    var ball = SKSpriteNode()
+    var counter = 0
+    var label = SKLabelNode()
     
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self
-       let border = SKPhysicsBody(edgeLoopFrom: self.frame)
+        let border = SKPhysicsBody(edgeLoopFrom: self.frame)
         self.physicsBody = border
         
         let topLeft = CGPoint(x: frame.origin.x, y: -frame.origin.y)
@@ -26,10 +33,30 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.addChild(top)
         
         topPaddle = self.childNode(withName: "topPaddle") as! SKSpriteNode
+        ball = self.childNode(withName: "ball") as! SKSpriteNode
+        
+        ball.physicsBody?.categoryBitMask = ballCategory
+        top.physicsBody?.categoryBitMask = topCategory
+        topPaddle.physicsBody?.categoryBitMask = paddleCategory
+        
+        ball.physicsBody?.contactTestBitMask = topCategory|paddleCategory
+        
+        label = SKLabelNode(text: "0")
+        label.fontSize = 100.0
+        label.position = CGPoint(x: 0, y: -35)
+        self.addChild(label)
     }
     func didBegin(_ contact: SKPhysicsContact) {
-        print(contact.bodyA.node?.name)
-        print(contact.bodyB.node?.name)
+         //        print(contact.bodyA.node?.name)
+        //        print(contact.bodyB.node?.name)
+        
+        if contact.bodyA.categoryBitMask == topCategory {
+            changePaddle(node: topPaddle)
+        }
+        if contact.bodyA.categoryBitMask == paddleCategory {
+            counter += 1
+            label.text = "\(counter)"
+        }
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -41,5 +68,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let touch = touches.first!
         let location = touch.location(in: self)
         topPaddle.run(SKAction.moveTo(x: location.x, duration: 0.2))
+    }
+    
+    func changePaddle(node: SKSpriteNode) {
+        if node.color == .yellow {
+            node.removeAllActions()
+            node.removeFromParent()
+        }
+        node.color = .yellow
     }
 }
